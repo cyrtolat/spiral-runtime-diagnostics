@@ -100,14 +100,12 @@ final class RunfileRepositoryTest extends TestCase
 
         // Тестируем ветку: started_at отсутствует => null.
         FileGetContentsMock::when($this->runfilePath, json_encode([
-            'enabled' => true,
             'until' => null,
         ]));
         $this->assertNull($this->buildStorage()->loadRunfileOrNull());
 
         // Тестируем ветку: started_at есть, но пустая строка => null.
         FileGetContentsMock::when($this->runfilePath, json_encode([
-            'enabled' => true,
             'started_at' => '',
             'until' => null,
         ]));
@@ -115,7 +113,6 @@ final class RunfileRepositoryTest extends TestCase
 
         // Тестируем ветку: started_at есть, но строка не парсится DateTimeImmutable => null.
         FileGetContentsMock::when($this->runfilePath, json_encode([
-            'enabled' => true,
             'started_at' => 'not parsable datetime',
             'until' => null,
         ]));
@@ -135,7 +132,6 @@ final class RunfileRepositoryTest extends TestCase
 
         // Тестируем ветку: until присутствует, но пустая строка => null.
         FileGetContentsMock::when($this->runfilePath, json_encode([
-            'enabled' => true,
             'started_at' => $startedAt,
             'until' => '',
         ]));
@@ -143,7 +139,6 @@ final class RunfileRepositoryTest extends TestCase
 
         // Тестируем ветку: until присутствует, но строка не парсится DateTimeImmutable => null.
         FileGetContentsMock::when($this->runfilePath, json_encode([
-            'enabled' => true,
             'started_at' => $startedAt,
             'until' => 'not parsable datetime and not null',
         ]));
@@ -163,7 +158,6 @@ final class RunfileRepositoryTest extends TestCase
 
         // Тестируем ветку: модель Runfile выбрасывает исключение (started_at позже until) => null.
         FileGetContentsMock::when($this->runfilePath, json_encode([
-            'enabled' => true,
             'started_at' => $datetime->modify('+5 minutes')->format(\DateTimeInterface::ATOM),
             'until' => $datetime->modify('-5 minutes')->format(\DateTimeInterface::ATOM),
         ]));
@@ -180,7 +174,7 @@ final class RunfileRepositoryTest extends TestCase
         IsFileMock::when($this->runfilePath, true);
 
         $datetime = (new \DateTimeImmutable())->format(\DateTimeInterface::ATOM);
-        $runfileData = ['enabled' => true, 'started_at' => $datetime];
+        $runfileData = ['started_at' => $datetime];
 
         // Тестируем ветку: until отсутствует => until=null.
         FileGetContentsMock::when($this->runfilePath, json_encode($runfileData));
@@ -201,7 +195,6 @@ final class RunfileRepositoryTest extends TestCase
         $this->assertInstanceOf(\DateTimeImmutable::class, $runfile->until);
 
         // Тестируем корректность базовых полей модели Runfile.
-        $this->assertNotNull($runfile->isEnabled);
         $this->assertNotNull($runfile->startedAt);
     }
 
@@ -219,7 +212,7 @@ final class RunfileRepositoryTest extends TestCase
         // Тестируем успешную атомарную запись:
         // - сначала пишем во временный файл
         // - затем делаем rename(tmp, runfile_path)
-        // Также проверяем, что итоговый JSON содержит ключи enabled/started_at/until.
+        // Также проверяем, что итоговый JSON содержит ключи started_at/until.
 
         // Используем filesystem-mock как «шпион»: он сохраняет calls(), но при значении по умолчанию null
         // делегирует в реальные \file_put_contents/\rename/\unlink.
@@ -231,7 +224,7 @@ final class RunfileRepositoryTest extends TestCase
         RenameMock::setDefault(null);
         UnlinkMock::setDefault(null);
 
-        $runfile = new Runfile(true, new \DateTimeImmutable(), new \DateTimeImmutable());
+        $runfile = new Runfile(new \DateTimeImmutable(), new \DateTimeImmutable());
         $this->buildStorage()->saveRunfileOrFail($runfile);
 
         // Тестируем факт создания итогового файла.
@@ -246,7 +239,6 @@ final class RunfileRepositoryTest extends TestCase
         $this->assertIsArray($payload);
 
         // Тестируем, что есть все обязательные ключи.
-        $this->assertArrayHasKey('enabled', $payload);
         $this->assertArrayHasKey('started_at', $payload);
         $this->assertArrayHasKey('until', $payload);
 
@@ -274,7 +266,7 @@ final class RunfileRepositoryTest extends TestCase
         JsonEncodeMock::setDefault(false);
 
         $this->expectException(DiagnosticsException::class);
-        $this->buildStorage()->saveRunfileOrFail(new Runfile(true, new \DateTimeImmutable(), null));
+        $this->buildStorage()->saveRunfileOrFail(new Runfile(new \DateTimeImmutable(), null));
     }
 
     /**
@@ -288,7 +280,7 @@ final class RunfileRepositoryTest extends TestCase
         FilePutContentsMock::setDefault(false);
 
         $this->expectException(DiagnosticsException::class);
-        $this->buildStorage()->saveRunfileOrFail(new Runfile(true, new \DateTimeImmutable(), null));
+        $this->buildStorage()->saveRunfileOrFail(new Runfile(new \DateTimeImmutable(), null));
     }
 
     /**
@@ -303,7 +295,7 @@ final class RunfileRepositoryTest extends TestCase
         // - tmp файл удаляется (unlink(tmp))
         // - выбрасывается DiagnosticsException.
 
-        $runfile = new Runfile(true, new \DateTimeImmutable(), null);
+        $runfile = new Runfile(new \DateTimeImmutable(), null);
 
         RenameMock::setDefault(false);
 
@@ -328,7 +320,7 @@ final class RunfileRepositoryTest extends TestCase
         // Тестируем, что на каждом вызове saveRunfileOrFail() генерируется новый tmp-путь
         // (т.е. makeTmpPath() не возвращает одинаковое имя).
 
-        $runfile = new Runfile(true, new \DateTimeImmutable(), null);
+        $runfile = new Runfile(new \DateTimeImmutable(), null);
 
         $this->buildStorage()->saveRunfileOrFail($runfile);
         $this->assertSame(1, count(RenameMock::calls()));

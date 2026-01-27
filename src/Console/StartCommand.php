@@ -40,7 +40,6 @@ final class StartCommand extends AbstractCommand
         $duration = $this->option('duration') ?? $config->getDuration();
 
         $runfile = new Runfile(
-            isEnabled: true,
             startedAt: $now,
             until: ConsoleDurationParser::parseUntil($duration, new \DateTimeImmutable())
         );

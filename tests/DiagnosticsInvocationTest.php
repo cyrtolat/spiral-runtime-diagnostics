@@ -63,32 +63,11 @@ final class DiagnosticsInvocationTest extends TestCase
         $at = new \DateTimeImmutable('2020-01-01T00:00:00+00:00');
 
         FileGetContentsMock::when($this->runfilePath, \json_encode([
-            'enabled' => true,
             'started_at' => $at->modify('-1 minute')->format(\DateTimeInterface::ATOM),
             'until' => null,
         ]));
 
         $this->assertTrue($this->buildInvocation()->shouldLogAt($at));
-    }
-
-    /**
-     * @covers \Cyrtolat\SpiralRuntimeDiagnostics\DiagnosticsInvocation::shouldLogAt
-     */
-    #[Test]
-    #[TestDox('shouldLogAt: возвращает false, если runfile выключен (enabled=false)')]
-    public function testShouldLogAtReturnsFalseWhenDisabled(): void
-    {
-        IsFileMock::when($this->runfilePath, true);
-
-        $at = new \DateTimeImmutable('2020-01-01T00:00:00+00:00');
-
-        FileGetContentsMock::when($this->runfilePath, \json_encode([
-            'enabled' => false,
-            'started_at' => $at->format(\DateTimeInterface::ATOM),
-            'until' => null,
-        ]));
-
-        $this->assertFalse($this->buildInvocation()->shouldLogAt($at));
     }
 
     /**
@@ -103,7 +82,6 @@ final class DiagnosticsInvocationTest extends TestCase
         $at = new \DateTimeImmutable('2020-01-01T00:00:00+00:00');
 
         FileGetContentsMock::when($this->runfilePath, \json_encode([
-            'enabled' => true,
             'started_at' => $at->modify('-1 hour')->format(\DateTimeInterface::ATOM),
             'until' => $at->modify('-1 second')->format(\DateTimeInterface::ATOM),
         ]));

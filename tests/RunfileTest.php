@@ -29,19 +29,19 @@ final class RunfileTest extends TestCase
         $now = new \DateTimeImmutable();
 
         // Тестируем валидный случай: until=null — ограничение по времени отсутствует.
-        $runfile = new Runfile(isEnabled: true, startedAt: $now, until: null);
+        $runfile = new Runfile(startedAt: $now, until: null);
         $this->assertInstanceOf(Runfile::class, $runfile);
 
         // Тестируем валидный случай: startedAt == until — период нулевой длительности допустим.
-        $runfile = new Runfile(isEnabled: true, startedAt: $now, until: $now);
+        $runfile = new Runfile(startedAt: $now, until: $now);
         $this->assertInstanceOf(Runfile::class, $runfile);
 
         // Тестируем валидный случай: startedAt может быть в будущем, если until=null.
-        $runfile = new Runfile(isEnabled: true, startedAt: $now->modify('+5 minutes'), until: null);
+        $runfile = new Runfile(startedAt: $now->modify('+5 minutes'), until: null);
         $this->assertInstanceOf(Runfile::class, $runfile);
 
         // Тестируем валидный случай: startedAt может быть в прошлом, если until=null.
-        $runfile = new Runfile(isEnabled: true, startedAt: $now->modify('-5 minutes'), until: null);
+        $runfile = new Runfile(startedAt: $now->modify('-5 minutes'), until: null);
         $this->assertInstanceOf(Runfile::class, $runfile);
     }
 
@@ -56,7 +56,7 @@ final class RunfileTest extends TestCase
 
         // Тестируем невалидный случай: startedAt > until должно приводить к исключению.
         $this->expectException(DiagnosticsException::class);
-        new Runfile(isEnabled: true, startedAt: $now->modify('+5 minutes'), until: $now);
+        new Runfile(startedAt: $now->modify('+5 minutes'), until: $now);
     }
 
     // =================================================================================================================
@@ -72,21 +72,10 @@ final class RunfileTest extends TestCase
     {
         $now = new \DateTimeImmutable();
 
-        // Тестируем ветку: диагностика выключена (isEnabled=false) => STATE_OFF.
-        $this->assertSame(
-            expected: Runfile::STATE_OFF,
-            actual: (new Runfile(
-                isEnabled: false,
-                startedAt: $now->modify('-5 minutes'),
-                until: null,
-            ))->stateAt($now),
-        );
-
-        // Тестируем ветку: диагностика включена (isEnabled=true) и until=null => STATE_ACTIVE.
+        // Тестируем ветку: диагностика включена until=null => STATE_ACTIVE.
         $this->assertSame(
             expected: Runfile::STATE_ACTIVE,
             actual: (new Runfile(
-                isEnabled: true,
                 startedAt: $now->modify('-5 minutes'),
                 until: null,
             ))->stateAt($now),
@@ -96,7 +85,6 @@ final class RunfileTest extends TestCase
         $this->assertSame(
             expected: Runfile::STATE_ACTIVE,
             actual: (new Runfile(
-                isEnabled: true,
                 startedAt: $now->modify('-5 minutes'),
                 until: $now->modify('+5 minutes'),
             ))->stateAt($now),
@@ -106,7 +94,6 @@ final class RunfileTest extends TestCase
         $this->assertSame(
             expected: Runfile::STATE_EXPIRED,
             actual: (new Runfile(
-                isEnabled: true,
                 startedAt: $now,
                 until: $now->modify('+5 minutes'),
             ))->stateAt($now->modify('+10 minutes')),
@@ -126,19 +113,9 @@ final class RunfileTest extends TestCase
     {
         $now = new \DateTimeImmutable();
 
-        // Тестируем ветку: isEnabled=false => isActive=false.
-        $this->assertFalse(
-            (new Runfile(
-                isEnabled: false,
-                startedAt: $now,
-                until: null,
-            ))->isActiveAt($now),
-        );
-
-        // Тестируем ветку: isEnabled=true и until=null => isActive=true.
+        // Тестируем ветку: until=null => isActive=true.
         $this->assertTrue(
             (new Runfile(
-                isEnabled: true,
                 startedAt: $now,
                 until: null,
             ))->isActiveAt($now),
@@ -147,16 +124,14 @@ final class RunfileTest extends TestCase
         // Тестируем поведение: startedAt в будущем не выключает активность, если until=null.
         $this->assertTrue(
             (new Runfile(
-                isEnabled: true,
                 startedAt: $now,
                 until: null,
             ))->isActiveAt($now->modify('-5 minutes')),
         );
 
-        // Тестируем ветку: isEnabled=true, но момент проверки позже until => isActive=false.
+        // Тестируем ветку: момент проверки позже until => isActive=false.
         $this->assertFalse(
             (new Runfile(
-                isEnabled: true,
                 startedAt: $now->modify('-10 minutes'),
                 until: $now->modify('-5 minutes'),
             ))->isActiveAt($now),
@@ -176,46 +151,33 @@ final class RunfileTest extends TestCase
     {
         $now = new \DateTimeImmutable();
 
-        // isEnabled=false => state=off => isExpired=false.
+        // until=null => never expired.
         $this->assertFalse(
             (new Runfile(
-                isEnabled: false,
-                startedAt: $now->modify('-1 hour'),
-                until: $now->modify('-10 minutes'),
-            ))->isExpiredAt($now),
-        );
-
-        // isEnabled=true и until=null => never expired.
-        $this->assertFalse(
-            (new Runfile(
-                isEnabled: true,
                 startedAt: $now->modify('-1 hour'),
                 until: null,
             ))->isExpiredAt($now),
         );
 
-        // isEnabled=true и at < until => active => not expired.
+        // at < until => active => not expired.
         $this->assertFalse(
             (new Runfile(
-                isEnabled: true,
                 startedAt: $now->modify('-1 hour'),
                 until: $now->modify('+10 minutes'),
             ))->isExpiredAt($now),
         );
 
-        // isEnabled=true и at == until => expired.
+        // at == until => expired.
         $this->assertTrue(
             (new Runfile(
-                isEnabled: true,
                 startedAt: $now->modify('-1 minute'),
                 until: $now,
             ))->isExpiredAt($now),
         );
 
-        // isEnabled=true и at > until => expired.
+        // at > until => expired.
         $this->assertTrue(
             (new Runfile(
-                isEnabled: true,
                 startedAt: $now->modify('-1 hour'),
                 until: $now->modify('-10 minutes'),
             ))->isExpiredAt($now),
@@ -235,10 +197,9 @@ final class RunfileTest extends TestCase
     {
         $now = new \DateTimeImmutable();
 
-        // until=null => forever (независимо от enabled).
+        // until=null => forever
         $this->assertTrue(
             (new Runfile(
-                isEnabled: true,
                 startedAt: $now,
                 until: null,
             ))->isForever(),
@@ -246,7 +207,6 @@ final class RunfileTest extends TestCase
 
         $this->assertTrue(
             (new Runfile(
-                isEnabled: false,
                 startedAt: $now,
                 until: null,
             ))->isForever(),
@@ -255,7 +215,6 @@ final class RunfileTest extends TestCase
         // until!=null => not forever.
         $this->assertFalse(
             (new Runfile(
-                isEnabled: true,
                 startedAt: $now,
                 until: $now->modify('+1 hour'),
             ))->isForever(),

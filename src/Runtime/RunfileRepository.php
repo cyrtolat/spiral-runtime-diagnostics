@@ -47,8 +47,6 @@ final class RunfileRepository
             return null;
         }
 
-        $enabled = (bool)($data['enabled'] ?? false);
-
         if (!isset($data['started_at'])) {
             return null;
         }
@@ -77,7 +75,7 @@ final class RunfileRepository
         }
 
         try {
-            return new Runfile(isEnabled: $enabled, startedAt: $startedAt, until: $until);
+            return new Runfile(startedAt: $startedAt, until: $until);
         } catch (\Throwable) {
             // Любая логическая ошибка/валидация трактуется как "невалидный runfile".
             return null;
@@ -97,7 +95,6 @@ final class RunfileRepository
         $tmp = $this->makeTmpPath($this->pathToFile);
 
         $payload = [
-            'enabled' => $runfile->isEnabled,
             'started_at' => $runfile->startedAt->format(\DateTimeInterface::ATOM),
             'until' => $runfile->until?->format(\DateTimeInterface::ATOM),
         ];

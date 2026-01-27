@@ -13,7 +13,6 @@ use Cyrtolat\SpiralRuntimeDiagnostics\DiagnosticsException;
  * которым управляют через CLI в рантайме, без деплоя и без перезапуска воркеров.
  *
  * Поля runfile:
- * - enabled: включена ли диагностика;
  * - started_at: когда режим был включён;
  * - until: до какого времени включена (или null, если до diag:stop).
  */
@@ -24,14 +23,12 @@ final class Runfile
     public const STATE_EXPIRED = 'expired';
 
     /**
-     * @param bool $isEnabled Флаг включения диагностики.
      * @param \DateTimeInterface $startedAt Момент включения режима диагностики.
      * @param \DateTimeInterface|null $until Время истечения режима или null (до diag:stop).
      *
      * @throws DiagnosticsException Если задан until и startedAt > until.
      */
     public function __construct(
-        public readonly bool $isEnabled,
         public readonly \DateTimeInterface $startedAt,
         public readonly ?\DateTimeInterface $until,
     ) {
@@ -44,9 +41,8 @@ final class Runfile
      * Возвращает состояние диагностики на момент времени $at.
      *
      * Состояния:
-     * - off: enabled=false (legacy-формат; обычно off означает отсутствие runfile)
-     * - active: enabled=true и (until=null или at < until)
-     * - expired: enabled=true и until!=null и at >= until
+     * - active: until=null или at < until
+     * - expired: until!=null и at >= until
      *
      * @param \DateTimeInterface $at Момент времени, для которого вычисляется состояние.
      *
@@ -54,10 +50,6 @@ final class Runfile
      */
     public function stateAt(\DateTimeInterface $at): string
     {
-        if (!$this->isEnabled) {
-            return self::STATE_OFF;
-        }
-
         if ($this->until === null) {
             return self::STATE_ACTIVE;
         }
@@ -69,7 +61,6 @@ final class Runfile
      * Проверяет, активен ли режим диагностики в момент времени $at.
      *
      * Правила:
-     * - enabled=false => неактивно (независимо от until);
      * - until=null => активно бессрочно (до diag:stop);
      * - until задан => активно, пока at < until.
      *
@@ -77,10 +68,6 @@ final class Runfile
      */
     public function isActiveAt(\DateTimeInterface $at): bool
     {
-        if (!$this->isEnabled) {
-            return false;
-        }
-
         if ($this->until === null) {
             return true;
         }
