@@ -75,22 +75,20 @@ final class DiagnosticsBootloader extends Bootloader
 
         // Единая точка доступа к runfile по пути из конфигурации.
         $binder->bindSingleton(
-            RunfileRepository::class,
-            static fn(): RunfileRepository => new RunfileRepository(pathToFile: $config->getRunfilePath()),
+            alias: RunfileRepository::class,
+            resolver: static fn(): RunfileRepository => new RunfileRepository(pathToFile: $config->getRunfilePath()),
         );
 
         // Interceptor зависит от:
         // - PSR-логгера (transport/handlers настраиваются в хост-приложении)
         // - invocation (read-only проверка активности диагностики)
         $binder->bindSingleton(
-            DiagnosticsInterceptor::class,
-            static function () use ($config, $container): DiagnosticsInterceptor {
-                return new DiagnosticsInterceptor(
-                    callableAttribute: $config->getCallableAttribute(),
-                    logger: $container->get(LogsInterface::class)->getLogger($config->getLogChannel()),
-                    invocation: new DiagnosticsInvocation($container->get(RunfileRepository::class)),
-                );
-            },
+            alias: DiagnosticsInterceptor::class,
+            resolver: static fn() => new DiagnosticsInterceptor(
+                callableAttribute: $config->getCallableAttribute(),
+                logger: $container->get(LogsInterface::class)->getLogger($config->getLogChannel()),
+                invocation: new DiagnosticsInvocation($container->get(RunfileRepository::class)),
+            ),
         );
     }
 }
