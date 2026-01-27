@@ -1,0 +1,49 @@
+{
+    "name": "cyrtolat/spiral-runtime-diagnostics",
+    "description": "Runtime diagnostics for Spiral Framework: call logging without redeploying or restarting RoadRunner.",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://github.com/cyrtolat/spiral-runtime-diagnostics",
+    "support": {
+        "issues": "https://github.com/cyrtolat/spiral-runtime-diagnostics/issues",
+        "source": "https://github.com/cyrtolat/spiral-runtime-diagnostics"
+    },
+    "require": {
+        "php": "^8.1",
+        "spiral/boot": "^3.15",
+        "spiral/config": "^3.15",
+        "spiral/console": "^3.15",
+        "spiral/core": "^3.15",
+        "spiral/files": "^3.15",
+        "spiral/interceptors": "^3.15",
+        "spiral/logger": "^3.15",
+        "psr/container": "^2.0",
+        "psr/log": "^3.0",
+        "symfony/console": "^6.4 || ^7.0 || ^8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "nyholm/psr7": "^1.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cyrtolat\\SpiralRuntimeDiagnostics\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Cyrtolat\\SpiralRuntimeDiagnostics\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "coverage": "XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-text"
+    },
+    "config": {
+        "allow-plugins": {
+            "spiral/composer-publish-plugin": true
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

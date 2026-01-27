@@ -1,0 +1,40 @@
+name: spiral-runtime-diagnostics
+
+services:
+    php:
+        build:
+            # Контекст сборки — корень репозитория (на уровень выше этого compose-файла).
+            context: ..
+            # Dockerfile лежит в docker/Dockerfile (относительно контекста).
+            dockerfile: docker/Dockerfile
+
+        # Рабочая директория внутри контейнера, где выполняются команды.
+        working_dir: /app
+
+        environment:
+            # Кэш Composer внутри контейнера (вынесен в именованный volume ниже).
+            COMPOSER_CACHE_DIR: /tmp/composer-cache
+
+            # Подавляет предупреждение Composer про "root package version",
+            # когда проект примонтирован без .git (например, в CI или из чистого архива).
+            COMPOSER_ROOT_VERSION: dev-main
+
+            # По умолчанию Xdebug выключен; включай точечно на команду через XDEBUG_MODE=coverage.
+            XDEBUG_MODE: "off"
+
+        volumes:
+            # Монтируем исходники проекта в /app (bind mount).
+            - ..:/app
+            # Отдельный volume для кэша Composer, чтобы не перекачивать зависимости каждый раз.
+            - composer-cache:/tmp/composer-cache
+
+        # Позволяет интерактивно заходить в контейнер и работать в терминале.
+        stdin_open: true
+        tty: true
+
+        # При старте ставим зависимости и держим контейнер живым для дальнейших команд.
+        command: sh -lc "composer install --no-interaction --prefer-dist && sleep infinity"
+
+volumes:
+    # Именованный volume для кэша Composer.
+    composer-cache:

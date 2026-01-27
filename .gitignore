@@ -1,0 +1,14 @@
+/vendor/
+/composer.lock
+/.phpunit.result.cache
+/.phpunit.cache/
+/coverage/
+
+# local IDE / OS
+/.idea/
+/.vscode/
+.DS_Store
+
+# local docker overrides (docker setup is committed, but per-dev files are not)
+/docker/.env
+/docker/.env.local
