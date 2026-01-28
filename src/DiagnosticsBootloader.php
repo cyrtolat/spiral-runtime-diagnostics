@@ -11,11 +11,15 @@ use Cyrtolat\SpiralRuntimeDiagnostics\Console\StartCommand;
 use Cyrtolat\SpiralRuntimeDiagnostics\Console\StatusCommand;
 use Cyrtolat\SpiralRuntimeDiagnostics\Console\StopCommand;
 use Cyrtolat\SpiralRuntimeDiagnostics\Runtime\RunfileRepository;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Spiral\Boot\Bootloader\Bootloader;
 use Spiral\Config\ConfiguratorInterface;
+use Spiral\Config\Exception\ConfigDeliveredException;
 use Spiral\Console\Bootloader\ConsoleBootloader;
 use Spiral\Core\BinderInterface;
+use Spiral\Core\Exception\ConfiguratorException;
 use Spiral\Logger\LogsInterface;
 
 /**
@@ -40,8 +44,8 @@ final class DiagnosticsBootloader extends Bootloader
      *
      * @param ConsoleBootloader $console Bootloader консоли Spiral (регистрация команд).
      *
-     * @throws \Spiral\Config\Exception\ConfigDeliveredException
-     * @throws \Spiral\Core\Exception\ConfiguratorException
+     * @throws ConfigDeliveredException Конфигурация уже была доставлена/зафиксирована, менять defaults поздно.
+     * @throws ConfiguratorException Ошибка конфигуратора при установке defaults секции `diagnostics`.
      */
     public function init(ConsoleBootloader $console): void
     {
@@ -67,6 +71,9 @@ final class DiagnosticsBootloader extends Bootloader
      *
      * @param BinderInterface $binder DI binder Spiral.
      * @param ContainerInterface $container DI container Spiral.
+     *
+     * @throws NotFoundExceptionInterface Когда в контейнере не найдена зависимость.
+     * @throws ContainerExceptionInterface Общая ошибка контейнера при получении записи.
      */
     public function boot(BinderInterface $binder, ContainerInterface $container): void
     {
@@ -76,7 +83,7 @@ final class DiagnosticsBootloader extends Bootloader
         // Единая точка доступа к runfile по пути из конфигурации.
         $binder->bindSingleton(
             alias: RunfileRepository::class,
-            resolver: static fn(): RunfileRepository => new RunfileRepository(pathToFile: $config->getRunfilePath()),
+            resolver: static fn() => new RunfileRepository(pathToFile: $config->getRunfilePath()),
         );
 
         // Interceptor зависит от:
