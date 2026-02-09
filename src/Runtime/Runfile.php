@@ -18,7 +18,6 @@ use Cyrtolat\SpiralRuntimeDiagnostics\DiagnosticsException;
  */
 final class Runfile
 {
-    public const STATE_OFF = 'off';
     public const STATE_ACTIVE = 'active';
     public const STATE_EXPIRED = 'expired';
 
@@ -46,7 +45,7 @@ final class Runfile
      *
      * @param \DateTimeInterface $at Момент времени, для которого вычисляется состояние.
      *
-     * @return self::STATE_OFF|self::STATE_ACTIVE|self::STATE_EXPIRED
+     * @return self::STATE_ACTIVE|self::STATE_EXPIRED
      */
     public function stateAt(\DateTimeInterface $at): string
     {
