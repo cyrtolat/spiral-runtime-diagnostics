@@ -104,14 +104,14 @@ final class RunfileRepositoryTest extends TestCase
         ]));
         $this->assertNull($this->buildStorage()->loadRunfileOrNull());
 
-        // Тестируем ветку: started_at есть, но пустая строка => null.
+        // Тестируем ветку: started_at есть, но это не строка.
         FileGetContentsMock::when($this->runfilePath, json_encode([
-            'started_at' => '',
+            'started_at' => ['foo' => 'bar'],
             'until' => null,
         ]));
         $this->assertNull($this->buildStorage()->loadRunfileOrNull());
 
-        // Тестируем ветку: started_at есть, но строка не парсится DateTimeImmutable => null.
+        // Тестируем ветку: started_at есть, но строка не парсится => null.
         FileGetContentsMock::when($this->runfilePath, json_encode([
             'started_at' => 'not parsable datetime',
             'until' => null,

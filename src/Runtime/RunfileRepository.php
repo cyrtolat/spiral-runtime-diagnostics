@@ -33,33 +33,37 @@ final class RunfileRepository
      */
     public function loadRunfileOrNull(): ?Runfile
     {
+        // 1) Файл runfile должен существовать (иначе override не задан).
         if (!is_file($this->pathToFile)) {
             return null;
         }
 
+        // 2) Читаем содержимое; любая ошибка доступа/чтения — считаем runfile невалидным.
         $raw = file_get_contents($this->pathToFile);
         if ($raw === false) {
             return null;
         }
 
+        // 3) Парсим JSON в ассоциативный массив; ожидаем объект (array), иначе формат неверный.
         $data = json_decode($raw, true);
         if (!is_array($data)) {
             return null;
         }
 
-        if (!isset($data['started_at'])) {
-            return null;
-        }
-        if ((!is_string($data['started_at'])) or (trim($data['started_at']) === '')) {
+        // 4) started_at — обязательное строчное поле.
+        $startedAt = $data['started_at'] ?? null;
+        if (!is_string($startedAt)) {
             return null;
         }
 
+        // 5) started_at должен парситься в DateTimeImmutable.
         try {
             $startedAt = new \DateTimeImmutable($data['started_at']);
         } catch (\Throwable) {
             return null;
         }
 
+        // 6) until — опциональное поле: либо отсутствует/равно null, либо непустая строка, которая парсится.
         $until = null;
         if (array_key_exists('until', $data) and ($data['until'] !== null)) {
             // until должен быть непустой строкой, парсибельной DateTimeImmutable.
@@ -74,10 +78,10 @@ final class RunfileRepository
             }
         }
 
+        // 7) Финальная валидация модели: любые логические/доменнные ошибки трактуем как "невалидный runfile".
         try {
             return new Runfile(startedAt: $startedAt, until: $until);
         } catch (\Throwable) {
-            // Любая логическая ошибка/валидация трактуется как "невалидный runfile".
             return null;
         }
     }
